@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --color-manga-black: #111111;
+  --color-manga-white: #ffffff;
+  --color-manga-gray-100: #f5f5f5;
+  --color-manga-gray-200: #e5e5e5;
+  --color-manga-gray-400: #a3a3a3;
+  --color-manga-gray-600: #525252;
+  --color-manga-gray-800: #262626;
+  --color-popsicle-300: #bae6fd;
+  --color-popsicle-500: #7dd3fc;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    background-color: var(--color-manga-white);
+    color: var(--color-manga-black);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-manga-black);
+    color: var(--color-manga-white);
+  }
+}
+
+@keyframes scroll-hint {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes manga-slam {
+  0%   { opacity: 0; transform: translateY(36px) scale(0.95); }
+  55%  { opacity: 1; transform: translateY(-6px) scale(1.015); }
+  75%  { transform: translateY(3px) scale(0.998); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes manga-slam-left {
+  0%   { opacity: 0; transform: translateX(-36px) scale(0.95); }
+  55%  { opacity: 1; transform: translateX(6px) scale(1.015); }
+  75%  { transform: translateX(-3px) scale(0.998); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes manga-slam-right {
+  0%   { opacity: 0; transform: translateX(36px) scale(0.95); }
+  55%  { opacity: 1; transform: translateX(-6px) scale(1.015); }
+  75%  { transform: translateX(3px) scale(0.998); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@layer components {
+  .animate-scroll-hint {
+    animation: scroll-hint 1.2s ease-in-out infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out 0.8s both;
+  }
+
+  .manga-slam {
+    animation: manga-slam 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .manga-slam-left {
+    animation: manga-slam-left 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .manga-slam-right {
+    animation: manga-slam-right 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  /* Halftone screentone */
+  .manga-dots {
+    position: relative;
+  }
+  .manga-dots::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #111 1px, transparent 1px);
+    background-size: 8px 8px;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .manga-dots-dark::before {
+    background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+    opacity: 0.08;
+  }
+
+  /* Speech bubble */
+  .manga-bubble {
+    position: relative;
+    background: white;
+    border: 3px solid #111;
+    border-radius: 2rem;
+    padding: 0.75rem 1.25rem;
+    display: inline-block;
+  }
+  .manga-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 2px solid transparent;
+    border-top: 18px solid #111;
+  }
+  .manga-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 22px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 2px solid transparent;
+    border-top: 13px solid white;
+    z-index: 1;
+  }
+
+  /* Spiky/action bubble */
+  .manga-bubble-shout {
+    position: relative;
+    background: white;
+    border: 3px solid #111;
+    clip-path: polygon(
+      4% 10%, 10% 4%, 20% 8%, 30% 0%, 40% 6%, 50% 0%, 60% 5%, 70% 0%, 80% 4%, 90% 0%, 96% 8%,
+      100% 20%, 96% 35%, 100% 50%, 96% 65%, 100% 80%, 94% 92%,
+      80% 100%, 65% 96%, 50% 100%, 35% 96%, 20% 100%, 8% 94%,
+      0% 80%, 4% 65%, 0% 50%, 4% 35%, 0% 20%
+    );
+    padding: 1rem 1.5rem;
+    display: inline-block;
+  }
+
+  .manga-panel {
+    border: 2px solid var(--color-manga-black);
+    background-color: var(--color-manga-white);
+  }
+
+  .manga-panel-thick {
+    border: 4px solid var(--color-manga-black);
+    background-color: var(--color-manga-white);
+  }
+
+  .manga-invert {
+    background-color: var(--color-manga-black);
+    color: var(--color-manga-white);
+  }
+}
