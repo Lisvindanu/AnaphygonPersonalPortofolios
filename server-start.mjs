@@ -1,13 +1,66 @@
 import { createServer } from 'node:http'
+import { createReadStream, existsSync, statSync } from 'node:fs'
+import { resolve, extname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import server from './dist/server/server.js'
 
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const port = parseInt(process.env.PORT ?? '3100', 10)
+
+const MIME = {
+  '.js': 'application/javascript',
+  '.mjs': 'application/javascript',
+  '.css': 'text/css',
+  '.html': 'text/html',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+}
+
+function serveStatic(res, filePath) {
+  const ext = extname(filePath).toLowerCase()
+  const mime = MIME[ext] ?? 'application/octet-stream'
+  const stat = statSync(filePath)
+  res.writeHead(200, {
+    'Content-Type': mime,
+    'Content-Length': stat.size,
+    'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+  })
+  createReadStream(filePath).pipe(res)
+}
 
 const httpServer = createServer(async (nodeReq, nodeRes) => {
   try {
+    const url = nodeReq.url ?? '/'
+
+    // Serve /assets/* from dist/client/assets/
+    if (url.startsWith('/assets/')) {
+      const filePath = resolve(__dirname, 'dist/client', url.slice(1))
+      if (existsSync(filePath)) {
+        serveStatic(nodeRes, filePath)
+        return
+      }
+    }
+
+    // Serve public files (favicon, images, robots.txt, etc.) from dist/client/
+    const publicPath = resolve(__dirname, 'dist/client', url.split('?')[0].slice(1))
+    if (existsSync(publicPath) && statSync(publicPath).isFile()) {
+      serveStatic(nodeRes, publicPath)
+      return
+    }
+
+    // SSR handler
     const proto = nodeReq.socket?.encrypted ? 'https' : 'http'
     const host = nodeReq.headers.host ?? `localhost:${port}`
-    const url = new URL(nodeReq.url ?? '/', `${proto}://${host}`)
+    const fullUrl = new URL(url, `${proto}://${host}`)
 
     const headers = new Headers()
     for (const [k, v] of Object.entries(nodeReq.headers)) {
@@ -23,7 +76,7 @@ const httpServer = createServer(async (nodeReq, nodeRes) => {
       })
     }
 
-    const request = new Request(url, { method: nodeReq.method, headers, body })
+    const request = new Request(fullUrl, { method: nodeReq.method, headers, body })
     const response = await server.fetch(request)
 
     nodeRes.statusCode = response.status
