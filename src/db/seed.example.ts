@@ -18,11 +18,11 @@ async function seed() {
   console.log('Seeding database...')
 
   // Admin user
-  const passwordHash = await hash('Anaphygon15082004')
+  const passwordHash = await hash(process.env.ADMIN_PASSWORD ?? 'change_me')
   await db
     .insert(schema.users)
-    .values({ username: 'Lisvindanu', passwordHash })
-    .onDuplicateKeyUpdate({ set: { username: 'Lisvindanu', passwordHash } })
+    .values({ username: process.env.ADMIN_USERNAME ?? 'admin', passwordHash })
+    .onDuplicateKeyUpdate({ set: { username: process.env.ADMIN_USERNAME ?? 'admin', passwordHash } })
 
   // Sample hard skills
   await db.insert(schema.hardSkills).values([
