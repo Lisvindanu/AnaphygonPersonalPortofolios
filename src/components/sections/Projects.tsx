@@ -97,9 +97,9 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
                   </p>
                 )}
                 {project.images && project.images.length > 0 && (
-                  <div className="flex gap-1 mb-4 overflow-x-auto">
+                  <div className="flex gap-2 mb-4 overflow-x-auto">
                     {project.images.map((url, i) => (
-                      <img key={i} src={url} alt="" className="w-16 h-11 object-cover border border-manga-black flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-300" />
+                      <img key={i} src={url} alt="" className="w-40 h-28 object-cover border border-manga-black flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-300" />
                     ))}
                   </div>
                 )}
@@ -142,9 +142,9 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
               </div>
             )}
             {project.images && project.images.length > 0 && (
-              <div className="flex gap-1 mb-4 overflow-x-auto">
+              <div className="flex gap-2 mb-4 overflow-x-auto">
                 {project.images.map((url, i) => (
-                  <img key={i} src={url} alt="" className="w-16 h-11 object-cover border border-manga-black flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-300" />
+                  <img key={i} src={url} alt="" className="w-32 h-20 object-cover border border-manga-black flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-300" />
                 ))}
               </div>
             )}
