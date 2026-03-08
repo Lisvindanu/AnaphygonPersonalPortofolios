@@ -28,7 +28,7 @@ export function Tools({ tools }: ToolsProps) {
       >
         <div className="flex items-baseline gap-4">
           <h2 className="text-4xl md:text-5xl font-black text-manga-white" style={{ fontFamily: 'Bangers, cursive' }}>
-            TOOLS
+            LANGUAGES & TOOLS
           </h2>
           <span className="text-popsicle-300 text-sm uppercase tracking-widest">— Chapter 04: Daily Arsenal</span>
         </div>
