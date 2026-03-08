@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MangaPanel } from '~/components/ui/MangaPanel'
 import { useInView } from '~/hooks/useInView'
@@ -39,156 +39,58 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
 }
 
 // ─── Image Slider ─────────────────────────────────────────────────────────────
-function ImageSlider({ images, aspectClass }: { images: string[]; aspectClass?: string }) {
+function ImageSlider({ images, className }: { images: string[]; className?: string }) {
   const [current, setCurrent] = useState(0)
-  const [dragOffset, setDragOffset] = useState(0) // fraction: -1 to 1
-  const [snapping, setSnapping] = useState(false)
   const [lightbox, setLightbox] = useState<string | null>(null)
-
-  const containerRef = useRef<HTMLDivElement>(null)
-  const pointerStart = useRef<{ x: number; moved: boolean } | null>(null)
 
   if (images.length === 0) return null
 
-  const total = images.length
-  const prevIdx = (current - 1 + total) % total
-  const nextIdx = (current + 1) % total
-
-  function go(dir: 1 | -1) {
-    const target = dir === 1 ? nextIdx : prevIdx
-    setSnapping(true)
-    setDragOffset(dir === 1 ? -1 : 1)
-    setTimeout(() => {
-      setCurrent(target)
-      setDragOffset(0)
-      setSnapping(false)
-    }, 280)
+  const prev = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrent((c) => (c - 1 + images.length) % images.length)
   }
-
-  function onPointerDown(e: React.PointerEvent) {
-    if (snapping) return
-    pointerStart.current = { x: e.clientX, moved: false }
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  const next = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrent((c) => (c + 1) % images.length)
   }
-
-  function onPointerMove(e: React.PointerEvent) {
-    if (!pointerStart.current || snapping) return
-    const delta = e.clientX - pointerStart.current.x
-    if (Math.abs(delta) > 6) pointerStart.current.moved = true
-    if (pointerStart.current.moved) {
-      const w = containerRef.current?.offsetWidth || 1
-      // clamp drag — less resistance if single image
-      const max = total > 1 ? 1 : 0.1
-      setDragOffset(Math.max(-max, Math.min(max, delta / w)))
-    }
-  }
-
-  function onPointerUp(e: React.PointerEvent) {
-    if (!pointerStart.current) return
-    const wasMoved = pointerStart.current.moved
-    pointerStart.current = null
-
-    if (!wasMoved) {
-      setDragOffset(0)
-      setLightbox(images[current])
-      return
-    }
-
-    if (total > 1 && dragOffset < -0.25) {
-      go(1)
-    } else if (total > 1 && dragOffset > 0.25) {
-      go(-1)
-    } else {
-      // snap back
-      setSnapping(true)
-      setDragOffset(0)
-      setTimeout(() => setSnapping(false), 280)
-    }
-  }
-
-  const transition = snapping ? 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'
-
-  // adjacent image that peeks in while dragging
-  const adjacentIdx = dragOffset <= 0 ? nextIdx : prevIdx
-  const adjacentBase = dragOffset <= 0 ? 1 : -1
 
   return (
     <>
-      <div
-        ref={containerRef}
-        className={`relative overflow-hidden select-none border-2 border-manga-black group-hover:border-manga-gray-600 ${aspectClass ?? 'aspect-video'} cursor-grab active:cursor-grabbing`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        {/* Adjacent image — slides in from side */}
-        {total > 1 && (
-          <img
-            src={images[adjacentIdx]}
-            alt=""
-            draggable={false}
-            className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0"
-            style={{ transform: `translateX(${(adjacentBase + dragOffset) * 100}%)`, transition }}
-          />
-        )}
-
-        {/* Current image */}
+      <div className={`relative overflow-hidden group/slider border-2 border-manga-black group-hover:border-manga-gray-600 ${className ?? 'aspect-video'}`}>
         <img
           src={images[current]}
           alt=""
+          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300 cursor-zoom-in"
           draggable={false}
-          className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0"
-          style={{ transform: `translateX(${dragOffset * 100}%)`, transition }}
+          onClick={() => setLightbox(images[current])}
         />
 
-        {/* Thin panel divider line visible during drag */}
-        {Math.abs(dragOffset) > 0.01 && (
-          <div
-            className="absolute top-0 bottom-0 w-0.5 bg-manga-black pointer-events-none z-10"
-            style={{
-              left: `calc(${dragOffset * 100}% - 1px)`,
-              opacity: Math.min(1, Math.abs(dragOffset) * 4),
-            }}
-          />
-        )}
-
-        {/* Arrows */}
-        {total > 1 && (
+        {images.length > 1 && (
           <>
             <button
-              className="absolute left-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-r from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20"
-              onClick={(e) => { e.stopPropagation(); go(-1) }}
-              aria-label="Previous"
+              onClick={prev}
+              className="absolute left-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-r from-black/50 to-transparent opacity-0 group-hover/slider:opacity-100 transition-opacity"
             >
-              <span className="text-white font-black text-xl leading-none">‹</span>
+              <span className="text-white font-black text-xl">‹</span>
             </button>
             <button
-              className="absolute right-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-l from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20"
-              onClick={(e) => { e.stopPropagation(); go(1) }}
-              aria-label="Next"
+              onClick={next}
+              className="absolute right-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-l from-black/50 to-transparent opacity-0 group-hover/slider:opacity-100 transition-opacity"
             >
-              <span className="text-white font-black text-xl leading-none">›</span>
+              <span className="text-white font-black text-xl">›</span>
             </button>
+
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 pointer-events-none">
+              {images.map((_, i) => (
+                <span key={i} className={`block w-1.5 h-1.5 rounded-full ${i === current ? 'bg-white' : 'bg-white/40'}`} />
+              ))}
+            </div>
+
+            <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
+              {current + 1} / {images.length}
+            </div>
           </>
         )}
-
-        {/* Dots */}
-        {total > 1 && (
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-20 pointer-events-none">
-            {images.map((_, i) => (
-              <span
-                key={i}
-                className={`block w-1.5 h-1.5 rounded-full transition-all duration-200 ${i === current ? 'bg-white' : 'bg-white/35'}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Counter / zoom hint */}
-        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 pointer-events-none z-20">
-          {total > 1 ? `${current + 1} / ${total}` : '⤢'}
-        </div>
       </div>
 
       {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
@@ -263,8 +165,8 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
         {isFeatured ? (
           <div className={`flex flex-col h-full ${imageRight ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
             {allImages.length > 0 && (
-              <div className={`w-full md:w-1/2 flex-shrink-0 ${imageRight ? 'md:border-l-2' : 'md:border-r-2'} border-manga-black`}>
-                <ImageSlider images={allImages} aspectClass="h-56 md:h-full" />
+              <div className={`w-full md:w-1/2 flex-shrink-0 ${imageRight ? 'md:border-l-2' : 'md:border-r-2'} border-manga-black overflow-hidden`}>
+                <ImageSlider images={allImages} className="w-full h-56 md:h-full aspect-auto" />
               </div>
             )}
             <div className="p-6 md:p-10 flex flex-col justify-between flex-1">
@@ -308,7 +210,7 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
           <div className="p-6 md:p-8 flex flex-col h-full">
             {allImages.length > 0 && (
               <div className="w-full mb-4">
-                <ImageSlider images={allImages} aspectClass="aspect-video" />
+                <ImageSlider images={allImages} className="aspect-video" />
               </div>
             )}
             <h3 className="text-2xl font-black mb-2" style={{ fontFamily: 'Bangers, cursive' }}>
