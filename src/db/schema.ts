@@ -64,7 +64,7 @@ export const softSkills = mysqlTable('soft_skills', {
 })
 
 // ─── Tools ───────────────────────────────────────────────────────────────────
-export const TOOL_CATEGORIES = ['IDE', 'Design', 'DevOps', 'Browser', 'Productivity', 'Other'] as const
+export const TOOL_CATEGORIES = ['Language', 'Framework', 'IDE', 'Design', 'DevOps', 'Browser', 'Productivity', 'Other'] as const
 export type ToolCategory = (typeof TOOL_CATEGORIES)[number]
 
 export const tools = mysqlTable('tools', {
