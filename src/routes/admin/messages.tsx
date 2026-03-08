@@ -11,13 +11,15 @@ const getMessagesFn = createServerFn({ method: 'GET' }).handler(async () => {
 })
 
 const markReadFn = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { id: number } }) => {
+  .handler(async (ctx) => {
+    const data = ctx.data as { id: number }
     await getDb().update(contactMessages).set({ isRead: true }).where(eq(contactMessages.id, data.id))
     return { success: true }
   })
 
 const deleteMessageFn = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { id: number } }) => {
+  .handler(async (ctx) => {
+    const data = ctx.data as { id: number }
     await getDb().delete(contactMessages).where(eq(contactMessages.id, data.id))
     return { success: true }
   })

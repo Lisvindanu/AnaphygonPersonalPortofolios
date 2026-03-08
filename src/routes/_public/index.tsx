@@ -42,7 +42,8 @@ const contactSchema = z.object({
 })
 
 const sendContactFn = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { name: string; email: string; message: string } }) => {
+  .handler(async (ctx) => {
+    const data = ctx.data as { name: string; email: string; message: string }
     const parsed = contactSchema.parse(data)
     await getDb().insert(contactMessagesTable).values(parsed)
 
