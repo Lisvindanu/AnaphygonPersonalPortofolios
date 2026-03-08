@@ -42,8 +42,8 @@ const contactSchema = z.object({
 })
 
 const sendContactFn = createServerFn({ method: 'POST' })
-  .handler(async (ctx) => {
-    const data = ctx.data as { name: string; email: string; message: string }
+  .inputValidator((d: { name: string; email: string; message: string }) => d)
+  .handler(async ({ data }) => {
     const parsed = contactSchema.parse(data)
     await getDb().insert(contactMessagesTable).values(parsed)
 
@@ -239,7 +239,7 @@ function HomePage() {
               <Tools tools={tools} />
               <MangaBreak />
               <Projects projects={projects} />
-              <Footer socialLinks={socialLinks} onContact={sendContactFn} />
+              <Footer socialLinks={socialLinks} onContact={(data) => sendContactFn({ data })} />
             </main>
           </div>
       )}
