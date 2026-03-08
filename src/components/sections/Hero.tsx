@@ -56,11 +56,28 @@ export function Hero() {
                   <em>"To run away."</em>
                 </p>
               </div>
-              <div className="mt-6 border-t border-manga-gray-800 pt-4">
+              <div className="mt-6 border-t border-manga-gray-800 pt-4 space-y-3">
                 <p className="text-xs text-manga-gray-400 leading-relaxed">
                   This portfolio is not an escape.<br />
                   It is a step forward.
                 </p>
+                <div className="flex gap-2 pt-1">
+                  <a
+                    href="/cv.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center py-2 border-2 border-manga-white text-manga-white text-xs font-black uppercase tracking-widest hover:bg-manga-white hover:text-manga-black transition-colors duration-150"
+                  >
+                    View CV
+                  </a>
+                  <a
+                    href="/cv.pdf"
+                    download
+                    className="flex-1 text-center py-2 bg-manga-white text-manga-black text-xs font-black uppercase tracking-widest hover:opacity-70 transition-opacity"
+                  >
+                    Download ↓
+                  </a>
+                </div>
               </div>
 
             </MangaPanel>

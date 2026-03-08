@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getDb } from '~/lib/db.server'
@@ -14,10 +15,60 @@ const getStats = createServerFn({ method: 'GET' }).handler(async () => {
   return { projects: proj.length, hardSkills: hard.length, softSkills: soft.length }
 })
 
+const uploadCvFn = createServerFn({ method: 'POST' })
+  .inputValidator((d: { data: string }) => d)
+  .handler(async ({ data }) => {
+    const { writeFile } = await import('node:fs/promises')
+    const { join } = await import('node:path')
+    const base64 = data.data.replace(/^data:[^;]+;base64,/, '')
+    const buf = Buffer.from(base64, 'base64')
+    await writeFile(join(process.cwd(), 'public', 'cv.pdf'), buf)
+    return { success: true }
+  })
+
 export const Route = createFileRoute('/admin/dashboard')({
   loader: () => getStats(),
   component: Dashboard,
 })
+
+function CvUpload() {
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setStatus('uploading')
+    const data = await new Promise<string>((res) => {
+      const reader = new FileReader()
+      reader.onload = () => res(reader.result as string)
+      reader.readAsDataURL(file)
+    })
+    try {
+      await uploadCvFn({ data: { data } })
+      setStatus('done')
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <MangaPanel className="p-6 border-2 border-manga-black">
+      <p className="text-xs uppercase tracking-widest text-manga-gray-400 mb-3">CV / Resume</p>
+      <div className="flex items-center gap-4 flex-wrap">
+        <label className="cursor-pointer px-4 py-2 border-2 border-manga-black text-xs font-black uppercase tracking-widest hover:bg-manga-black hover:text-manga-white transition-colors">
+          {status === 'uploading' ? 'Uploading...' : 'Upload PDF ↑'}
+          <input type="file" accept=".pdf" className="hidden" onChange={handleFile} disabled={status === 'uploading'} />
+        </label>
+        <a href="/cv.pdf" target="_blank" rel="noopener noreferrer"
+          className="text-xs font-bold uppercase tracking-widest border-b-2 border-manga-black hover:opacity-60">
+          Preview current →
+        </a>
+        {status === 'done' && <span className="text-xs font-bold uppercase tracking-widest text-green-600">Uploaded!</span>}
+        {status === 'error' && <span className="text-xs font-bold uppercase tracking-widest text-red-600">Failed.</span>}
+      </div>
+    </MangaPanel>
+  )
+}
 
 function Dashboard() {
   const stats = Route.useLoaderData()
@@ -52,6 +103,10 @@ function Dashboard() {
             </p>
           </MangaPanel>
         ))}
+      </div>
+
+      <div className="mb-4">
+        <CvUpload />
       </div>
 
       <MangaPanel className="p-6 border-2 border-manga-black">
