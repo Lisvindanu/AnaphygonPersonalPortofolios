@@ -30,7 +30,7 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
       <img
         src={src}
         alt=""
-        className="max-w-[90vw] max-h-[90vh] object-contain border-2 border-manga-white"
+        className="max-w-[90vw] max-h-[90vh] object-contain border-2 border-white"
         onClick={(e) => e.stopPropagation()}
       />
     </div>,
@@ -39,90 +39,155 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
 }
 
 // ─── Image Slider ─────────────────────────────────────────────────────────────
-function ImageSlider({
-  images,
-  aspectClass,
-}: {
-  images: string[]
-  aspectClass?: string
-}) {
+function ImageSlider({ images, aspectClass }: { images: string[]; aspectClass?: string }) {
   const [current, setCurrent] = useState(0)
+  const [dragOffset, setDragOffset] = useState(0) // fraction: -1 to 1
+  const [snapping, setSnapping] = useState(false)
   const [lightbox, setLightbox] = useState<string | null>(null)
-  const dragStart = useRef<number | null>(null)
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const pointerStart = useRef<{ x: number; moved: boolean } | null>(null)
 
   if (images.length === 0) return null
 
-  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length)
-  const next = () => setCurrent((c) => (c + 1) % images.length)
+  const total = images.length
+  const prevIdx = (current - 1 + total) % total
+  const nextIdx = (current + 1) % total
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragStart.current = e.clientX
+  function go(dir: 1 | -1) {
+    const target = dir === 1 ? nextIdx : prevIdx
+    setSnapping(true)
+    setDragOffset(dir === 1 ? -1 : 1)
+    setTimeout(() => {
+      setCurrent(target)
+      setDragOffset(0)
+      setSnapping(false)
+    }, 280)
   }
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (dragStart.current === null) return
-    const delta = e.clientX - dragStart.current
-    dragStart.current = null
-    if (Math.abs(delta) < 8) {
-      // tap → lightbox
-      setLightbox(images[current])
-    } else if (delta < -40) {
-      next()
-    } else if (delta > 40) {
-      prev()
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (snapping) return
+    pointerStart.current = { x: e.clientX, moved: false }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!pointerStart.current || snapping) return
+    const delta = e.clientX - pointerStart.current.x
+    if (Math.abs(delta) > 6) pointerStart.current.moved = true
+    if (pointerStart.current.moved) {
+      const w = containerRef.current?.offsetWidth || 1
+      // clamp drag — less resistance if single image
+      const max = total > 1 ? 1 : 0.1
+      setDragOffset(Math.max(-max, Math.min(max, delta / w)))
     }
   }
 
+  function onPointerUp(e: React.PointerEvent) {
+    if (!pointerStart.current) return
+    const wasMoved = pointerStart.current.moved
+    pointerStart.current = null
+
+    if (!wasMoved) {
+      setDragOffset(0)
+      setLightbox(images[current])
+      return
+    }
+
+    if (total > 1 && dragOffset < -0.25) {
+      go(1)
+    } else if (total > 1 && dragOffset > 0.25) {
+      go(-1)
+    } else {
+      // snap back
+      setSnapping(true)
+      setDragOffset(0)
+      setTimeout(() => setSnapping(false), 280)
+    }
+  }
+
+  const transition = snapping ? 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'
+
+  // adjacent image that peeks in while dragging
+  const adjacentIdx = dragOffset <= 0 ? nextIdx : prevIdx
+  const adjacentBase = dragOffset <= 0 ? 1 : -1
+
   return (
     <>
-      <div className="relative overflow-hidden border-2 border-manga-black group-hover:border-manga-gray-600 select-none">
-        {/* Image */}
-        <div
-          className={`w-full ${aspectClass ?? 'aspect-video'} overflow-hidden cursor-zoom-in`}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-        >
+      <div
+        ref={containerRef}
+        className={`relative overflow-hidden select-none border-2 border-manga-black group-hover:border-manga-gray-600 ${aspectClass ?? 'aspect-video'} cursor-grab active:cursor-grabbing`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        {/* Adjacent image — slides in from side */}
+        {total > 1 && (
           <img
-            src={images[current]}
+            src={images[adjacentIdx]}
             alt=""
-            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300 pointer-events-none"
             draggable={false}
+            className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0"
+            style={{ transform: `translateX(${(adjacentBase + dragOffset) * 100}%)`, transition }}
           />
-        </div>
+        )}
 
-        {/* Arrows — only if multiple */}
-        {images.length > 1 && (
+        {/* Current image */}
+        <img
+          src={images[current]}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0"
+          style={{ transform: `translateX(${dragOffset * 100}%)`, transition }}
+        />
+
+        {/* Thin panel divider line visible during drag */}
+        {Math.abs(dragOffset) > 0.01 && (
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-manga-black pointer-events-none z-10"
+            style={{
+              left: `calc(${dragOffset * 100}% - 1px)`,
+              opacity: Math.min(1, Math.abs(dragOffset) * 4),
+            }}
+          />
+        )}
+
+        {/* Arrows */}
+        {total > 1 && (
           <>
             <button
-              onClick={(e) => { e.stopPropagation(); prev() }}
-              className="absolute left-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-r from-black/40 to-transparent hover:from-black/70 transition-all"
+              className="absolute left-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-r from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20"
+              onClick={(e) => { e.stopPropagation(); go(-1) }}
               aria-label="Previous"
             >
-              <span className="text-white font-black text-lg leading-none">‹</span>
+              <span className="text-white font-black text-xl leading-none">‹</span>
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); next() }}
-              className="absolute right-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-l from-black/40 to-transparent hover:from-black/70 transition-all"
+              className="absolute right-0 top-0 bottom-0 px-3 flex items-center bg-gradient-to-l from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20"
+              onClick={(e) => { e.stopPropagation(); go(1) }}
               aria-label="Next"
             >
-              <span className="text-white font-black text-lg leading-none">›</span>
+              <span className="text-white font-black text-xl leading-none">›</span>
             </button>
-
-            {/* Dot indicators */}
-            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-              {images.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={(e) => { e.stopPropagation(); setCurrent(i) }}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${i === current ? 'bg-white' : 'bg-white/40'}`}
-                />
-              ))}
-            </div>
           </>
         )}
 
-        {/* View hint */}
-        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
-          {images.length > 1 ? `${current + 1}/${images.length}` : '⤢'}
+        {/* Dots */}
+        {total > 1 && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-20 pointer-events-none">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`block w-1.5 h-1.5 rounded-full transition-all duration-200 ${i === current ? 'bg-white' : 'bg-white/35'}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Counter / zoom hint */}
+        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 pointer-events-none z-20">
+          {total > 1 ? `${current + 1} / ${total}` : '⤢'}
         </div>
       </div>
 
@@ -144,7 +209,6 @@ export function Projects({ projects }: ProjectsProps) {
       <div
         style={{ animation: inView ? 'manga-slam 0.42s cubic-bezier(0.22, 1, 0.36, 1) both' : 'none', opacity: inView ? undefined : 0 }}
       >
-        {/* Header */}
         <MangaPanel thick className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-6">
             <h2
@@ -161,10 +225,7 @@ export function Projects({ projects }: ProjectsProps) {
 
         {projects.length === 0 ? (
           <MangaPanel className="p-12 text-center border-2 border-manga-black">
-            <p
-              className="text-3xl font-black text-manga-gray-400"
-              style={{ fontFamily: 'Bangers, cursive' }}
-            >
+            <p className="text-3xl font-black text-manga-gray-400" style={{ fontFamily: 'Bangers, cursive' }}>
               COMING SOON
             </p>
             <p className="text-sm text-manga-gray-400 mt-2">Projects are loading...</p>
@@ -188,7 +249,6 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
   const techStack = Array.isArray(project.techStack) ? project.techStack : []
   const imageRight = index % 4 === 1 || index % 4 === 2
 
-  // Combine imageUrl + gallery images into one slider array
   const allImages = [
     ...(project.imageUrl ? [project.imageUrl] : []),
     ...(Array.isArray(project.images) ? project.images : []),
@@ -201,7 +261,6 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
     >
       <MangaPanel className="border-2 border-manga-black group hover:bg-manga-black hover:text-manga-white transition-colors duration-200 h-full">
         {isFeatured ? (
-          /* Featured: horizontal layout */
           <div className={`flex flex-col h-full ${imageRight ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
             {allImages.length > 0 && (
               <div className={`w-full md:w-1/2 flex-shrink-0 ${imageRight ? 'md:border-l-2' : 'md:border-r-2'} border-manga-black`}>
@@ -246,7 +305,6 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
             </div>
           </div>
         ) : (
-          /* Non-featured: vertical layout */
           <div className="p-6 md:p-8 flex flex-col h-full">
             {allImages.length > 0 && (
               <div className="w-full mb-4">
