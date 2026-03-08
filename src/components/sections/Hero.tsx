@@ -1,6 +1,27 @@
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { MangaPanel } from '~/components/ui/MangaPanel'
 
+function CvModal({ onClose }: { onClose: () => void }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/90 flex flex-col">
+      <div className="flex items-center justify-between px-6 h-12 border-b-2 border-manga-white flex-shrink-0">
+        <span className="text-white text-xs font-black uppercase tracking-widest">CV — Lisvindanu</span>
+        <div className="flex items-center gap-4">
+          <a href="/cv.pdf" download className="text-white text-xs font-black uppercase tracking-widest hover:opacity-60">
+            Download ↓
+          </a>
+          <button onClick={onClose} className="text-white text-2xl font-black leading-none hover:opacity-60">×</button>
+        </div>
+      </div>
+      <iframe src="/cv.pdf" className="flex-1 w-full" title="CV" />
+    </div>,
+    document.body
+  )
+}
+
 export function Hero() {
+  const [showCv, setShowCv] = useState(false)
   return (
     <section className="relative min-h-screen flex items-center justify-center p-4 md:p-0 overflow-hidden manga-dots">
       {/* Background grid lines — manga page feel */}
@@ -62,14 +83,12 @@ export function Hero() {
                   It is a step forward.
                 </p>
                 <div className="flex gap-2 pt-1">
-                  <a
-                    href="/cv.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setShowCv(true)}
                     className="flex-1 text-center py-2 border-2 border-manga-white text-manga-white text-xs font-black uppercase tracking-widest hover:bg-manga-white hover:text-manga-black transition-colors duration-150"
                   >
                     View CV
-                  </a>
+                  </button>
                   <a
                     href="/cv.pdf"
                     download
@@ -78,6 +97,7 @@ export function Hero() {
                     Download ↓
                   </a>
                 </div>
+                {showCv && <CvModal onClose={() => setShowCv(false)} />}
               </div>
 
             </MangaPanel>
