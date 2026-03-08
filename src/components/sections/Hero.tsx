@@ -2,19 +2,28 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MangaPanel } from '~/components/ui/MangaPanel'
 
+const CV_URL = 'https://anaphygon.my.id/cv.pdf'
+
 function CvModal({ onClose }: { onClose: () => void }) {
+  const viewerSrc = `https://docs.google.com/viewer?url=${encodeURIComponent(CV_URL)}&embedded=true`
+
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-black/90 flex flex-col">
-      <div className="flex items-center justify-between px-6 h-12 border-b-2 border-manga-white flex-shrink-0">
-        <span className="text-white text-xs font-black uppercase tracking-widest">CV — Lisvindanu</span>
+    <div className="fixed inset-0 z-[9999] bg-manga-black flex flex-col">
+      <div className="flex items-center justify-between px-4 md:px-6 h-12 border-b-2 border-manga-gray-800 flex-shrink-0">
+        <span className="text-manga-white text-xs font-black uppercase tracking-widest">CV — Lisvindanu</span>
         <div className="flex items-center gap-4">
-          <a href="/cv.pdf" download className="text-white text-xs font-black uppercase tracking-widest hover:opacity-60">
+          <a href={CV_URL} download className="text-manga-white text-xs font-black uppercase tracking-widest hover:opacity-60">
             Download ↓
           </a>
-          <button onClick={onClose} className="text-white text-2xl font-black leading-none hover:opacity-60">×</button>
+          <button onClick={onClose} className="text-manga-white text-2xl font-black leading-none hover:opacity-60">×</button>
         </div>
       </div>
-      <iframe src="/cv.pdf" className="flex-1 w-full" title="CV" />
+      <iframe
+        src={viewerSrc}
+        className="flex-1 w-full bg-manga-gray-100"
+        title="CV"
+        allow="autoplay"
+      />
     </div>,
     document.body
   )
