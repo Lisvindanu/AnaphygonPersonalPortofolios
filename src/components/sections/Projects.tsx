@@ -166,7 +166,7 @@ function ProjectCard({ project, index, inView }: { project: Project; index: numb
           <div className={`flex flex-col h-full ${imageRight ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
             {allImages.length > 0 && (
               <div className={`w-full md:w-1/2 flex-shrink-0 ${imageRight ? 'md:border-l-2' : 'md:border-r-2'} border-manga-black overflow-hidden`}>
-                <ImageSlider images={allImages} className="w-full h-64 md:h-[420px]" />
+                <ImageSlider images={allImages} className="w-full h-56 md:h-full aspect-auto" />
               </div>
             )}
             <div className="p-6 md:p-10 flex flex-col justify-between flex-1">
