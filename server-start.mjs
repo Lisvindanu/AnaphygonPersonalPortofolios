@@ -51,9 +51,17 @@ const httpServer = createServer(async (nodeReq, nodeRes) => {
     }
 
     // Serve public files (favicon, images, robots.txt, etc.) from dist/client/
-    const publicPath = resolve(__dirname, 'dist/client', url.split('?')[0].slice(1))
+    const urlPath = url.split('?')[0].slice(1)
+    const publicPath = resolve(__dirname, 'dist/client', urlPath)
     if (existsSync(publicPath) && statSync(publicPath).isFile()) {
       serveStatic(nodeRes, publicPath)
+      return
+    }
+
+    // Fallback: serve from public/ (for runtime-uploaded files)
+    const runtimePublicPath = resolve(__dirname, 'public', urlPath)
+    if (existsSync(runtimePublicPath) && statSync(runtimePublicPath).isFile()) {
+      serveStatic(nodeRes, runtimePublicPath)
       return
     }
 
