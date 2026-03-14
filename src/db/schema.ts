@@ -46,6 +46,7 @@ export const hardSkills = mysqlTable('hard_skills', {
     'Mobile',
     'DevOps',
     'Database',
+    'Caching',
     'Other',
   ])
     .notNull()
