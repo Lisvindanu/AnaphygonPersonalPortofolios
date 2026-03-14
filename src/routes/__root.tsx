@@ -34,6 +34,8 @@ export const Route = createRootRoute({
       { name: 'description', content: 'Portfolio of Lisvindanu (Anaphygon) — Fullstack & Mobile Developer.' },
       { name: 'author', content: 'Lisvindanu' },
       { name: 'theme-color', content: '#111111' },
+      { name: 'keywords', content: 'Lisvindanu, Anaphygon, fullstack developer, mobile developer, React, TypeScript, React Native, portfolio, Indonesia, web developer' },
+      { name: 'robots', content: 'index, follow' },
       // Open Graph
       { property: 'og:type', content: 'website' },
       { property: 'og:url', content: SITE_URL },
@@ -79,11 +81,28 @@ function RootComponent() {
   )
 }
 
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Lisvindanu',
+  alternateName: 'Anaphygon',
+  url: 'https://anaphygon.my.id',
+  image: 'https://anaphygon.my.id/og-image.png',
+  jobTitle: 'Fullstack & Mobile Developer',
+  description: 'Fullstack & Mobile Developer based in Indonesia. Building web and mobile applications.',
+  sameAs: [],
+  knowsAbout: ['React', 'TypeScript', 'React Native', 'Node.js', 'MySQL', 'TanStack'],
+}
+
 function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head suppressHydrationWarning>
         <HeadContent />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        />
       </head>
       <body>
         {children}

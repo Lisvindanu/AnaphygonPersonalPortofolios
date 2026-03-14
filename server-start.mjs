@@ -13,6 +13,9 @@ const MIME = {
   '.css': 'text/css',
   '.html': 'text/html',
   '.json': 'application/json',
+  '.xml': 'application/xml',
+  '.txt': 'text/plain',
+  '.pdf': 'application/pdf',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -25,6 +28,9 @@ const MIME = {
   '.ttf': 'font/ttf',
 }
 
+// Files that should never be cached permanently
+const NO_CACHE_EXTS = new Set(['.html', '.xml', '.txt'])
+
 function serveStatic(res, filePath) {
   const ext = extname(filePath).toLowerCase()
   const mime = MIME[ext] ?? 'application/octet-stream'
@@ -32,7 +38,7 @@ function serveStatic(res, filePath) {
   res.writeHead(200, {
     'Content-Type': mime,
     'Content-Length': stat.size,
-    'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+    'Cache-Control': NO_CACHE_EXTS.has(ext) ? 'no-cache' : 'public, max-age=31536000, immutable',
   })
   createReadStream(filePath).pipe(res)
 }
