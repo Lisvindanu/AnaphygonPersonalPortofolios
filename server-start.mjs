@@ -13,7 +13,7 @@ const MIME = {
   '.css': 'text/css',
   '.html': 'text/html',
   '.json': 'application/json',
-  '.xml': 'application/xml',
+  '.xml': 'text/xml; charset=utf-8',
   '.txt': 'text/plain',
   '.pdf': 'application/pdf',
   '.png': 'image/png',
