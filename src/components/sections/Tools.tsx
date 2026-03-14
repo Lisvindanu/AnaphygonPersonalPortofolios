@@ -72,9 +72,14 @@ const SLUG_MAP: Record<string, string> = {
   'neovim': 'neovim',
 }
 
+// Custom icon URLs for tools not in devicons
+const CUSTOM_ICONS: Record<string, string> = {
+  'krita': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Calligrakrita-base.svg/250px-Calligrakrita-base.svg.png',
+}
+
 // Tools known to not exist in devicons — skip immediately
 const NO_ICON = new Set([
-  'krita', 'canva', 'notion', 'obsidian', 'trello', 'jira', 'confluence',
+  'canva', 'notion', 'obsidian', 'trello', 'jira', 'confluence',
   'tanstack', 'framer motion', 'shadcn', 'shadcn/ui', 'drizzle', 'drizzle orm',
   'bun', 'pm2', 'postman', 'insomnia',
 ])
@@ -92,7 +97,14 @@ function ToolIcon({ name }: { name: string }) {
   const [variantIdx, setVariantIdx] = useState(0)
   const [failed, setFailed] = useState(false)
 
-  if (failed || NO_ICON.has(name.toLowerCase().trim())) return null
+  const key = name.toLowerCase().trim()
+  const customUrl = CUSTOM_ICONS[key]
+
+  if (customUrl) {
+    return <img src={customUrl} alt="" className="w-5 h-5 flex-shrink-0 object-contain" />
+  }
+
+  if (failed || NO_ICON.has(key)) return null
 
   return (
     <img
