@@ -2,7 +2,7 @@ import { MangaPanel } from '~/components/ui/MangaPanel'
 import { useInView } from '~/hooks/useInView'
 import type { HardSkill } from '~/db/schema'
 
-const CATEGORY_ORDER = ['Frontend', 'Backend', 'Mobile', 'Database', 'DevOps', 'Other']
+const CATEGORY_ORDER = ['Frontend', 'Backend', 'Mobile', 'Database', 'Caching', 'DevOps', 'Other']
 
 const CATEGORY_ICONS: Record<string, React.ReactElement> = {
   Frontend: (
