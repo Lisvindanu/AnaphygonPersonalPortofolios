@@ -32,6 +32,8 @@ const SLUG_MAP: Record<string, string> = {
   'express.js': 'express',
   'vs code': 'vscode',
   'vscode': 'vscode',
+  'visual studio code': 'vscode',
+  'visual studio': 'visualstudio',
   'android studio': 'androidstudio',
   'github': 'github',
   'gitlab': 'gitlab',
@@ -70,6 +72,13 @@ const SLUG_MAP: Record<string, string> = {
   'neovim': 'neovim',
 }
 
+// Tools known to not exist in devicons — skip immediately
+const NO_ICON = new Set([
+  'krita', 'canva', 'notion', 'obsidian', 'trello', 'jira', 'confluence',
+  'tanstack', 'framer motion', 'shadcn', 'shadcn/ui', 'drizzle', 'drizzle orm',
+  'bun', 'pm2', 'postman', 'insomnia',
+])
+
 // Variants to try in order
 const VARIANTS = ['original', 'plain', 'line', 'original-wordmark', 'plain-wordmark']
 
@@ -83,7 +92,7 @@ function ToolIcon({ name }: { name: string }) {
   const [variantIdx, setVariantIdx] = useState(0)
   const [failed, setFailed] = useState(false)
 
-  if (failed) return null
+  if (failed || NO_ICON.has(name.toLowerCase().trim())) return null
 
   return (
     <img
